@@ -1,4 +1,5 @@
 import type { AudioData } from './audio'
+import type * as THREE from 'three'
 
 export type VisualMode =
   | 'nebula-cloud'
@@ -7,11 +8,12 @@ export type VisualMode =
   | 'freq-terrain'
   | 'morph-blob'
   | 'tunnel-warp'
+  | 'liquid-mercury'
 
 export interface IVisualMode {
   update(audio: AudioData, delta: number, elapsed: number): void
   dispose(): void
   onBeat?(): void
-  onModeEnter?(): void
-  onModeExit?(): void
+  onModeEnter?(camera?: THREE.PerspectiveCamera): void
+  onModeExit?(camera?: THREE.PerspectiveCamera): void
 }

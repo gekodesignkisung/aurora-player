@@ -1,19 +1,18 @@
 import { usePlayerStore } from '@/store/playerStore'
-import { useResponsive } from '@/hooks/useResponsive'
 import type { VisualMode } from '@/types/visual'
 
 const MODES: { id: VisualMode; label: string; key: string }[] = [
-  { id: 'nebula-cloud',    label: 'Nebula', key: '1' },
-  { id: 'star-field',     label: 'Star Field',    key: '2' },
-  { id: 'crystal-lattice',label: 'Crystal',  key: '3' },
-  { id: 'freq-terrain',   label: 'Terrain',  key: '4' },
-  { id: 'morph-blob',     label: 'Blob',     key: '5' },
-  { id: 'tunnel-warp',    label: 'Tunnel',   key: '6' },
+  { id: 'nebula-cloud',    label: 'A', key: '1' },
+  { id: 'star-field',     label: 'B', key: '2' },
+  { id: 'crystal-lattice',label: 'C', key: '3' },
+  { id: 'freq-terrain',   label: 'D', key: '4' },
+  { id: 'morph-blob',     label: 'E', key: '5' },
+  { id: 'tunnel-warp',    label: 'F', key: '6' },
+  { id: 'liquid-mercury',       label: 'G', key: '7' },
 ]
 
 export default function ModeSelector() {
   const { visualMode, setVisualMode } = usePlayerStore()
-  const { isMobile } = useResponsive()
 
   return (
     <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 10, overflow: 'auto' }}>
@@ -21,9 +20,8 @@ export default function ModeSelector() {
         <button
           key={m.id}
           onClick={() => setVisualMode(m.id)}
-          title={`키 ${m.key}`}
           style={{
-            padding: isMobile ? '7px 14px' : '6px 12px', borderRadius: 50, fontSize: isMobile ? 12 : 10, fontWeight: 600,
+            padding: '10px 22px', borderRadius: 50, fontSize: 12, fontWeight: 600,
             border: 'none', cursor: 'pointer', transition: 'all 0.2s',
             background: visualMode === m.id ? 'white' : 'rgba(255,255,255,0.2)',
             color: visualMode === m.id ? 'black' : 'white',

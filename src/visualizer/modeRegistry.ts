@@ -6,6 +6,7 @@ import { CrystalLattice } from './modes/CrystalLattice'
 import { FreqTerrain }   from './modes/FreqTerrain'
 import { MorphBlob }     from './modes/MorphBlob'
 import { TunnelWarp }    from './modes/TunnelWarp'
+import { LiquidMercury }       from './modes/LiquidMercury'
 export function createMode(mode: VisualMode, scene: THREE.Scene): IVisualMode {
   switch (mode) {
     case 'nebula-cloud':    return new NebulaCloud(scene)
@@ -14,5 +15,6 @@ export function createMode(mode: VisualMode, scene: THREE.Scene): IVisualMode {
     case 'freq-terrain':    return new FreqTerrain(scene)
     case 'morph-blob':      return new MorphBlob(scene)
     case 'tunnel-warp':     return new TunnelWarp(scene)
+    case 'liquid-mercury':       return new LiquidMercury(scene)
   }
 }

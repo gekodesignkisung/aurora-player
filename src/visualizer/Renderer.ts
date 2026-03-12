@@ -11,6 +11,7 @@ const BG_CONFIG: Record<VisualMode, { pattern: number; dim: number; hue: number;
   'freq-terrain':    { pattern: 2, dim: 0.22, hue: 0.38, hueSpeed: 0.02 }, // grid, dark green matrix
   'morph-blob':      { pattern: 10, dim: 0.38, hue: 0.02, hueSpeed: 0.06 }, // diagonal waves, warm red-orange
   'tunnel-warp':     { pattern: 4, dim: 0.28, hue: 0.55, hueSpeed: 0.008 }, // diamond, tunnel
+  'liquid-mercury':       { pattern: 3, dim: 0.08, hue: 0.60, hueSpeed: 0.003 }, // diamond, near-black
 }
 
 export class Renderer {
@@ -134,7 +135,7 @@ export class Renderer {
     this.orthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
 
     this.currentMode = createMode(initialMode, this.scene)
-    this.currentMode.onModeEnter?.()
+    this.currentMode.onModeEnter?.(this.camera)
     this.isOrtho = false
     this._applyBgConfig(initialMode)
 
@@ -160,12 +161,12 @@ export class Renderer {
 
   setMode(mode: VisualMode) {
     if (mode === this.activeVisualMode) return
-    this.currentMode?.onModeExit?.()
+    this.currentMode?.onModeExit?.(this.camera)
     this.currentMode?.dispose()
     this.scene.clear()
     this.scene.add(this.ambientLight)
     this.currentMode = createMode(mode, this.scene)
-    this.currentMode.onModeEnter?.()
+    this.currentMode.onModeEnter?.(this.camera)
     this.activeVisualMode = mode
     this.isOrtho = false
     this._applyBgConfig(mode)

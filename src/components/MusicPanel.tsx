@@ -10,21 +10,45 @@ interface Props {
   onClose: () => void
 }
 
+// Figma design tokens (node 3-23)
+const S = {
+  colorText:          '#CCCCCC',
+  colorSub:           '#999999',
+  colorBg:            '#000000',
+  font:               'Inter, -apple-system, sans-serif',
+  pad:                30,
+  gap:                30,
+  tagRadius:          50,
+  tagPadH:            15,
+  tagPadV:            7,
+  tagFontSize:        14,
+  tagFontWeight:      600,
+  trackTitleSize:     16,
+  trackTitleWeight:   600,
+  trackArtistSize:    14,
+  trackArtistWeight:  500,
+  trackGap:           30,
+  playRowHeight:      60,
+  playRowRadius:      500,
+}
+
 export default function MusicPanel({ open, onClose }: Props) {
   const [dragging, setDragging] = useState(false)
-  const [tab, setTab] = useState<'local' | 'genre' | 'theme'>('genre')
-  const [selectedTheme, setSelectedTheme] = useState<ThemeId | null>(null)
+  const [tab, setTab] = useState<'genre' | 'theme' | 'local'>('genre')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { isMobile } = useResponsive()
 
-  const { track: currentTrack, playlist, jamendoQueue, setTrack, setIsPlaying, addLocalTracks, startGenreStream, startThemeStream, isLoadingJamendo } = usePlayerStore()
-  const { selectedGenre, setGenre } = useUIStore()
-
+  const {
+    track: currentTrack, playlist, jamendoQueue,
+    setTrack, setIsPlaying,
+    addLocalTracks, startGenreStream, startThemeStream, isLoadingJamendo,
+  } = usePlayerStore()
+  const { selectedGenre, setGenre, selectedTheme, setTheme: setSelectedTheme } = useUIStore()
 
   const allTracks: Track[] = tab === 'local' ? playlist : jamendoQueue
 
   const addFiles = useCallback((files: FileList | File[]) => {
-    const arr = Array.from(files).filter((f) => f.type.startsWith('audio/'))
+    const arr = Array.from(files).filter((f) => f.type.startsWith('audio/') || /\.(mp3|wav|flac|aac|ogg|m4a|opus|wma|aiff?)$/i.test(f.name))
     if (arr.length === 0) return
     const tracks: Track[] = arr.map((f) => ({
       id: `${f.name}-${f.size}`,
@@ -42,109 +66,172 @@ export default function MusicPanel({ open, onClose }: Props) {
     if (e.target.files) addFiles(e.target.files)
     e.target.value = ''
   }
-
   const onDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setDragging(false)
+    e.preventDefault(); setDragging(false)
     if (e.dataTransfer.files) addFiles(e.dataTransfer.files)
   }
 
-  const panelWidth = isMobile ? '100%' : 320
-  const panelStyle: React.CSSProperties = {
-    position: 'fixed', right: 0, top: 0, bottom: 0, width: panelWidth,
-    background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(20px)',
-    borderLeft: '1px solid rgba(255,255,255,0.08)',
-    zIndex: 40, display: 'flex', flexDirection: 'column',
-    transform: open ? 'translateX(0)' : 'translateX(100%)',
-    transition: 'transform 0.3s ease',
-    pointerEvents: 'auto',
+  const hov = {
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.opacity = '0.6' },
+    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.opacity = '1' },
+    onMouseDown:  (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.opacity = '1' },
+    onMouseUp:    (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.opacity = '0.6' },
+  }
+
+  const panelW: number | string = isMobile ? '100%' : 400
+  const canPlay = (tab === 'genre' && !!selectedGenre) || (tab === 'theme' && !!selectedTheme)
+  const handlePlay = () => {
+    if (tab === 'genre' && selectedGenre) { startGenreStream(selectedGenre); onClose() }
+    if (tab === 'theme' && selectedTheme) { startThemeStream(selectedTheme); onClose() }
   }
 
   return (
     <>
-      {/* Backdrop — only covers area outside the panel (left side) */}
+      {/* Backdrop — covers right side (panel opens from left) */}
       {open && (
         <div
           onClick={onClose}
           style={{
-            position: 'fixed', top: 0, bottom: 0, left: 0, right: 320,
+            position: 'fixed', top: 0, bottom: 0,
+            left: isMobile ? 0 : 400, right: 0,
             zIndex: 39, pointerEvents: 'auto',
           }}
         />
       )}
 
-      {/* Panel */}
-      <div style={panelStyle}>
-        {/* Header */}
-        <div style={{ padding: '16px 26px', position: 'sticky', top: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10, backdropFilter: 'blur(20px)', minHeight: 250 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
-            {/* Tabs */}
-            <div style={{ display: 'flex', gap: 4 }}>
-              {([
-                { id: 'genre',  label: '장르',  color: '#dddddd', bg: 'transparent'   },
-                { id: 'theme',  label: '테마',  color: '#dddddd', bg: 'transparent'   },
-                { id: 'local',  label: '로컬',  color: '#dddddd', bg: 'transparent' },
-              ] as const).map((t) => {
-                const isActive = tab === t.id
+      {/* Panel — slides from left */}
+      <div style={{
+        position: 'fixed', left: 0, top: 0, bottom: 0, width: panelW,
+        background: S.colorBg,
+        zIndex: 40, display: 'flex', flexDirection: 'column',
+        transform: open ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.3s ease',
+        pointerEvents: 'auto',
+        fontFamily: S.font,
+        overflow: 'hidden',
+      }}>
+
+        {/* ── 고정 상단 영역 ── */}
+        <div style={{ flexShrink: 0, padding: S.pad, paddingBottom: 0, display: 'flex', flexDirection: 'column', gap: S.gap }}>
+
+          {/* Logo + Close button */}
+          <div style={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <img src="/logo-aurora.svg" alt="aurora" style={{ height: 50 }} />
+            <button
+              onClick={onClose}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'opacity 0.15s', marginBottom: 10 }}
+              {...hov}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#999999" strokeWidth="2" strokeLinecap="round">
+                <line x1="7" y1="7" x2="17" y2="17"/>
+                <line x1="17" y1="7" x2="7" y2="17"/>
+              </svg>
+            </button>
+          </div>
+
+          {/* Navigation: Genre / Theme / Local */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+            {(['genre', 'theme', 'local'] as const).map((id) => (
+              <button
+                key={id}
+                onClick={() => setTab(id)}
+                style={{
+                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                  color: S.colorText, fontSize: 16, fontWeight: 700, fontFamily: S.font,
+                  opacity: tab === id ? 1 : 0.4,
+                  transition: 'opacity 0.15s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = tab === id ? '0.6' : '0.7' }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = tab === id ? '1' : '0.4' }}
+                onMouseDown={(e) => { e.currentTarget.style.opacity = '1' }}
+                onMouseUp={(e) => { e.currentTarget.style.opacity = tab === id ? '0.6' : '0.7' }}
+              >
+                {id === 'genre' ? 'Genre' : id === 'theme' ? 'Theme' : 'Local'}
+              </button>
+            ))}
+          </div>
+
+          {/* Genre tags */}
+          {tab === 'genre' && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {GENRES.map((g) => {
+                const active = selectedGenre === g.id
+                return (
+                  <button
+                    key={g.id}
+                    onClick={() => setGenre(g.id as GenreId)}
+                    style={{
+                      padding: `${S.tagPadV}px ${S.tagPadH}px`,
+                      borderRadius: S.tagRadius,
+                      fontSize: S.tagFontSize, fontWeight: S.tagFontWeight, fontFamily: S.font,
+                      border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                      background: active ? S.colorText : 'rgba(204,204,204,0.20)',
+                      color: active ? '#000000' : S.colorText,
+                    }}
+                    {...hov}
+                  >
+                    {g.label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Theme tags */}
+          {tab === 'theme' && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {THEMES.map((t) => {
+                const active = selectedTheme === t.id
                 return (
                   <button
                     key={t.id}
-                    onClick={() => setTab(t.id)}
+                    onClick={() => setSelectedTheme(t.id as ThemeId)}
                     style={{
-                      padding: isMobile ? '5px 10px' : '4px 8px', borderRadius: 0, fontSize: isMobile ? 17 : 14, fontWeight: 600,
-                      border: 'none',
-                      borderBottom: isActive ? '2px solid #dddddd' : '2px solid transparent',
-                      paddingBottom: isMobile ? '3px' : '4px',
-                      cursor: 'pointer', transition: 'all 0.15s',
-                      background: 'transparent',
-                      color: '#dddddd',
+                      padding: `${S.tagPadV}px ${S.tagPadH}px`,
+                      borderRadius: S.tagRadius,
+                      fontSize: S.tagFontSize, fontWeight: S.tagFontWeight, fontFamily: S.font,
+                      border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                      background: active ? S.colorText : 'rgba(204,204,204,0.20)',
+                      color: active ? '#000000' : S.colorText,
                     }}
+                    {...hov}
                   >
                     {t.label}
                   </button>
                 )
               })}
             </div>
-            <button
-              onClick={onClose}
-              style={{ color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
-            >
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-              </svg>
-            </button>
-          </div>
+          )}
 
-          {/* Tab content: local file drop zone */}
+          {/* Local file upload */}
           {tab === 'local' && (
-            <div style={{ minHeight: 180 }}>
+            <div>
               <label
                 htmlFor="music-file-input"
                 onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
                 onDragLeave={() => setDragging(false)}
                 onDrop={onDrop}
                 style={{
-                  display: 'block',
-                  border: `2px dashed ${dragging ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)'}`,
-                  borderRadius: 12, padding: '20px 16px',
-                  textAlign: 'center', cursor: 'pointer',
-                  background: dragging ? 'rgba(255,255,255,0.05)' : 'transparent',
-                  transition: 'all 0.2s',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: 8, height: 200,
+                  border: `2px dashed ${dragging ? '#999999' : '#666666'}`,
+                  borderRadius: 20,
+                  background: dragging ? 'rgba(255,255,255,0.03)' : 'transparent',
+                  cursor: 'pointer', transition: 'all 0.2s',
                 }}
               >
-                <svg width="28" height="28" fill="rgba(255,255,255,0.4)" viewBox="0 0 24 24" style={{ margin: '0 auto 8px' }}>
-                  <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
-                </svg>
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginBottom: 4 }}>
-                  음악 파일을 드래그하거나 클릭
-                </p>
-                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>
-                  MP3, WAV, FLAC, AAC, OGG
-                </p>
+                <img src="/icon-folder.svg" alt="" style={{ width: 60, height: 60 }} />
+                <div style={{ opacity: 0.6, textAlign: 'center' }}>
+                  <p style={{ color: '#CCCCCC', fontSize: 14, fontWeight: 600, fontFamily: S.font, margin: 0, lineHeight: '22.4px' }}>
+                    음악 파일들을 드래그하거나 클릭
+                  </p>
+                  <p style={{ color: '#555555', fontSize: 14, fontWeight: 600, fontFamily: S.font, margin: 0, lineHeight: '22.4px' }}>
+                    MP3, WAV, FLAC, AAC, OGG
+                  </p>
+                </div>
               </label>
               <input
-                id="music-file-input"
-                ref={fileInputRef}
+                id="music-file-input" ref={fileInputRef}
                 type="file" accept="audio/*" multiple
                 onChange={onFileChange}
                 style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none' }}
@@ -152,139 +239,80 @@ export default function MusicPanel({ open, onClose }: Props) {
             </div>
           )}
 
-          {/* Genre tab */}
-          {tab === 'genre' && (
-            <div style={{ minHeight: 180 }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10, minHeight: 50 }}>
-                {GENRES.map((g) => (
-                  <button
-                    key={g.id}
-                    onClick={() => setGenre(g.id as GenreId)}
-                    style={{
-                      padding: isMobile ? '5px 12px' : '4px 10px', borderRadius: 999, fontSize: isMobile ? 14 : 12,
-                      border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                      background: selectedGenre === g.id ? '#dddddd' : 'rgba(255,255,255,0.1)',
-                      color: selectedGenre === g.id ? '#000' : 'rgba(255,255,255,0.65)',
-                    }}
-                  >
-                    {g.label}
-                  </button>
-                ))}
-              </div>
-              <button
-                onClick={() => {
-                  if (selectedGenre) {
-                    startGenreStream(selectedGenre)
-                    onClose()
-                  }
-                }}
-                disabled={!selectedGenre || isLoadingJamendo}
-                style={{
-                  width: '100%', padding: isMobile ? '10px' : '8px', borderRadius: 999, fontSize: isMobile ? 16 : 13,
-                  fontWeight: 600, border: '2px solid #dddddd', cursor: 'pointer',
-                  background: 'transparent', color: '#dddddd',
-                  opacity: (!selectedGenre || isLoadingJamendo) ? 0.4 : 1,
-                  transition: 'opacity 0.2s',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                }}
-              >
-                {isLoadingJamendo ? '로딩 중…' : '▶'}
-              </button>
-            </div>
+          {/* Play button */}
+          {(tab === 'genre' || tab === 'theme') && (
+            <button
+              onClick={handlePlay}
+              disabled={!canPlay || isLoadingJamendo}
+              style={{
+                height: S.playRowHeight, borderRadius: S.playRowRadius,
+                border: '2px solid #CCCCCC', background: 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                paddingTop: 21, paddingBottom: 21, paddingLeft: 22, paddingRight: 22, gap: 10,
+                cursor: canPlay && !isLoadingJamendo ? 'pointer' : 'default',
+                opacity: canPlay && !isLoadingJamendo ? 1 : 0.3,
+                transition: 'transform 0.15s, opacity 0.15s',
+              }}
+              onMouseEnter={(e) => { if (canPlay && !isLoadingJamendo) e.currentTarget.style.opacity = '0.6' }}
+            onMouseLeave={(e) => { if (canPlay && !isLoadingJamendo) e.currentTarget.style.opacity = '1' }}
+            onMouseDown={(e) => { if (canPlay && !isLoadingJamendo) e.currentTarget.style.opacity = '1' }}
+            onMouseUp={(e) => { if (canPlay && !isLoadingJamendo) e.currentTarget.style.opacity = '0.6' }}
+            >
+              {isLoadingJamendo
+                ? <span style={{ color: S.colorText, fontSize: 13, fontFamily: S.font }}>Loading…</span>
+                : <img src="/icon-play-list.svg" alt="play" style={{ width: 30, height: 30 }} />
+              }
+            </button>
           )}
+        </div>
 
-          {/* Theme tab */}
-          {tab === 'theme' && (
-            <div style={{ minHeight: 180 }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10, minHeight: 50 }}>
-                {THEMES.map((t) => (
-                  <button
+        {/* ── 스크롤 하단 영역 ── */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: S.pad, display: 'flex', flexDirection: 'column', gap: S.gap }}>
+
+          {/* Track list */}
+          {allTracks.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: S.trackGap }}>
+              {allTracks.map((t) => {
+                const isCurrent = currentTrack?.id === t.id
+                return (
+                  <div
                     key={t.id}
-                    onClick={() => setSelectedTheme(t.id as ThemeId)}
-                    style={{
-                      padding: isMobile ? '5px 12px' : '4px 10px', borderRadius: 999, fontSize: isMobile ? 14 : 12,
-                      border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                      background: selectedTheme === t.id ? '#dddddd' : 'rgba(255,255,255,0.1)',
-                      color: selectedTheme === t.id ? '#000' : 'rgba(255,255,255,0.65)',
-                    }}
+                    onClick={() => { setTrack(t); setIsPlaying(true); onClose() }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'background 0.15s', borderRadius: 8, padding: '6px 8px', margin: '-6px -8px', background: isCurrent ? 'rgba(153,153,153,0.2)' : 'transparent' }}
+                    onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = 'rgba(153,153,153,0.1)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = isCurrent ? 'rgba(153,153,153,0.2)' : 'transparent' }}
                   >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-              <button
-                onClick={() => {
-                  if (selectedTheme) {
-                    startThemeStream(selectedTheme)
-                    onClose()
-                  }
-                }}
-                disabled={!selectedTheme || isLoadingJamendo}
-                style={{
-                  width: '100%', padding: isMobile ? '10px' : '8px', borderRadius: 999, fontSize: isMobile ? 16 : 13,
-                  fontWeight: 600, border: '2px solid #dddddd', cursor: 'pointer',
-                  background: 'transparent', color: '#dddddd',
-                  opacity: (!selectedTheme || isLoadingJamendo) ? 0.4 : 1,
-                  transition: 'opacity 0.2s',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                }}
-              >
-                {isLoadingJamendo ? '로딩 중…' : '▶'}
-              </button>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{
+                        color: isCurrent ? '#ffffff' : S.colorText,
+                        fontSize: S.trackTitleSize, fontWeight: S.trackTitleWeight, fontFamily: S.font,
+                        margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {t.name}
+                      </p>
+                      <p style={{
+                        color: S.colorSub,
+                        fontSize: S.trackArtistSize, fontWeight: S.trackArtistWeight, fontFamily: S.font,
+                        margin: '4px 0 0',
+                      }}>
+                        {t.artist}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
-        </div>
 
-        {/* Track list */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          {allTracks.length === 0 ? (
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', height: 160,
-              color: 'rgba(255,255,255,0.25)', fontSize: 13, gap: 8,
-            }}>
-              <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24" style={{ opacity: 0.3 }}>
-                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-              </svg>
-              <span>{tab === 'genre' ? '장르를 선택 후 시작하세요' : tab === 'theme' ? '테마를 선택 후 시작하세요' : ''}</span>
-            </div>
-          ) : (
-            allTracks.map((t) => (
-              <div
-                key={t.id}
-                onClick={() => {
-                  setTrack(t)
-                  setIsPlaying(true)
-                  onClose()
-                }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 0,
-                  padding: isMobile ? '10px 12px 10px 24px' : '10px 16px 10px 36px',
-                  cursor: 'pointer',
-                  background: currentTrack?.id === t.id ? 'rgba(255,255,255,0.08)' : 'transparent',
-                  transition: 'background 0.15s',
-                }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{
-                    color: currentTrack?.id === t.id ? 'white' : 'rgba(255,255,255,0.75)',
-                    fontSize: 13, fontWeight: 500,
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  }}>
-                    {t.name}
-                  </p>
-                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>{t.artist}</p>
-                </div>
-              </div>
-            ))
+          {/* Empty state */}
+          {allTracks.length === 0 && tab !== 'local' && (
+            <p style={{ color: 'rgba(255,255,255,0.18)', fontSize: 13, fontFamily: S.font, margin: 0 }}>
+              {tab === 'genre' ? 'Genre를 선택 후 재생하세요' : 'Theme를 선택 후 재생하세요'}
+            </p>
           )}
+
         </div>
 
-        <div style={{ padding: '10px 16px', textAlign: 'center' }}>
-          <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>
-            {allTracks.length > 0 ? `${allTracks.length}개 트랙` : tab === 'local' ? '로컬 파일 재생' : 'Deezer 무료 스트리밍'  }
-          </p>
-        </div>
       </div>
     </>
   )

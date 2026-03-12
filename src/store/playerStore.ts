@@ -71,10 +71,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { track, playlist, jamendoQueue } = get()
     const combined = [...playlist, ...jamendoQueue]
     if (combined.length === 0) return
-    if (!track) { set({ track: combined[0], visualMode: getRandomMode() }); return }
+    if (!track) { set({ track: combined[0] }); return }
     const idx = combined.findIndex((t) => t.id === track.id)
     const next = combined[(idx + 1) % combined.length]
-    set({ track: next, visualMode: getRandomMode() })
+    set({ track: next })
     // Prefetch more Jamendo tracks when queue runs low
     if (jamendoQueue.length < 5 && track.genre) {
       fetchGenreQueue(track.genre as GenreId, 20).then((tracks) => {
@@ -89,7 +89,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (combined.length === 0 || !track) return
     const idx = combined.findIndex((t) => t.id === track.id)
     const prev = combined[(idx - 1 + combined.length) % combined.length]
-    set({ track: prev, visualMode: getRandomMode() })
+    set({ track: prev })
   },
 
   startGenreStream: async (genre) => {
