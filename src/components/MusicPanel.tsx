@@ -259,7 +259,7 @@ export default function MusicPanel({ open, onClose }: Props) {
                 }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 0,
-                  padding: isMobile ? '10px 12px' : '10px 16px 10px 36px',
+                  padding: isMobile ? '10px 12px 10px 24px' : '10px 16px 10px 36px',
                   cursor: 'pointer',
                   background: currentTrack?.id === t.id ? 'rgba(255,255,255,0.08)' : 'transparent',
                   transition: 'background 0.15s',
