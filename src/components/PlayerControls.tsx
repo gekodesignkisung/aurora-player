@@ -229,9 +229,25 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
       </div>
 
       {/* Bottom: Row 2 - Volume control + Effects buttons */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 72, paddingRight: 72, flexShrink: 0 }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'stretch' : 'center',
+        justifyContent: 'space-between',
+        paddingLeft: isMobile ? '16px' : 72,
+        paddingRight: isMobile ? '16px' : 72,
+        gap: isMobile ? '16px' : 0,
+        flexShrink: 0
+      }}>
         {/* Volume control */}
-        <div style={{ width: 150, height: 20, position: 'relative', display: 'flex', alignItems: 'center', marginLeft: 20 }}>
+        <div style={{
+          width: isMobile ? '100%' : 150,
+          height: 20,
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          marginLeft: isMobile ? 0 : 20
+        }}>
           <div style={{
             position: 'absolute', width: '100%', height: 2,
             background: 'rgba(255,255,255,0.2)', borderRadius: 50,
