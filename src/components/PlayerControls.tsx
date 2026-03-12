@@ -241,12 +241,13 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
       }}>
         {/* Volume control */}
         <div style={{
-          width: isMobile ? '100%' : 150,
+          width: isMobile ? '80%' : 150,
           height: 20,
           position: 'relative',
           display: 'flex',
           alignItems: 'center',
-          marginLeft: isMobile ? 0 : 20
+          marginLeft: isMobile ? 'auto' : 20,
+          marginRight: isMobile ? 'auto' : 0
         }}>
           <div style={{
             position: 'absolute', width: '100%', height: 2,
