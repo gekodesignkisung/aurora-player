@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { usePlayerStore } from '@/store/playerStore'
 import { useUIStore } from '@/store/uiStore'
+import { useResponsive } from '@/hooks/useResponsive'
 import { GENRES, THEMES, type GenreId, type ThemeId } from '@/api/deezer'
 import type { Track } from '@/types/track'
 
@@ -14,6 +15,7 @@ export default function MusicPanel({ open, onClose }: Props) {
   const [tab, setTab] = useState<'local' | 'genre' | 'theme'>('genre')
   const [selectedTheme, setSelectedTheme] = useState<ThemeId | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { isMobile } = useResponsive()
 
   const { track: currentTrack, playlist, jamendoQueue, setTrack, setIsPlaying, addLocalTracks, startGenreStream, startThemeStream, isLoadingJamendo } = usePlayerStore()
   const { selectedGenre, setGenre } = useUIStore()
@@ -47,8 +49,9 @@ export default function MusicPanel({ open, onClose }: Props) {
     if (e.dataTransfer.files) addFiles(e.dataTransfer.files)
   }
 
+  const panelWidth = isMobile ? '100%' : 320
   const panelStyle: React.CSSProperties = {
-    position: 'fixed', right: 0, top: 0, bottom: 0, width: 320,
+    position: 'fixed', right: 0, top: 0, bottom: 0, width: panelWidth,
     background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(20px)',
     borderLeft: '1px solid rgba(255,255,255,0.08)',
     zIndex: 40, display: 'flex', flexDirection: 'column',

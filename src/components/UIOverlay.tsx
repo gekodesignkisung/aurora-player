@@ -1,6 +1,7 @@
 'use client'
 import { useUIStore } from '@/store/uiStore'
 import { useIdleHide } from '@/hooks/useIdleHide'
+import { useResponsive } from '@/hooks/useResponsive'
 import type { AudioAnalyzer } from '@/audio/AudioAnalyzer'
 import PlayerControls from './PlayerControls'
 import MusicPanel from './MusicPanel'
@@ -13,9 +14,13 @@ interface Props {
 
 export default function UIOverlay({ audioRef, analyzerRef }: Props) {
   useIdleHide()
+  const { isMobile } = useResponsive()
   const showUI = useUIStore((s) => s.showUI)
   const musicPanelOpen = useUIStore((s) => s.musicPanelOpen)
   const setMusicPanelOpen = useUIStore((s) => s.setMusicPanelOpen)
+
+  const buttonSize = isMobile ? 56 : 72
+  const buttonPosition = isMobile ? '16px' : '50px'
 
   return (
     <>
@@ -24,8 +29,8 @@ export default function UIOverlay({ audioRef, analyzerRef }: Props) {
       <button
         onClick={() => setMusicPanelOpen(!musicPanelOpen)}
         style={{
-          position: 'fixed', top: '50px', right: '50px', zIndex: 20,
-          width: 72, height: 72, borderRadius: '50%',
+          position: 'fixed', top: buttonPosition, right: buttonPosition, zIndex: 20,
+          width: buttonSize, height: buttonSize, borderRadius: '50%',
           background: 'none',
           border: 'none',
           cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -34,7 +39,7 @@ export default function UIOverlay({ audioRef, analyzerRef }: Props) {
           padding: 0,
         }}
       >
-        <img src="/icon-menu.svg" alt="menu" style={{ width: 72, height: 72 }} />
+        <img src="/icon-menu.svg" alt="menu" style={{ width: buttonSize, height: buttonSize }} />
       </button>
       {/* Player controls fade with idle timer */}
       <div style={{ display: showUI ? 'block' : 'none' }}>

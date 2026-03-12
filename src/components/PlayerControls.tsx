@@ -3,6 +3,7 @@ import { AudioAnalyzer } from '@/audio/AudioAnalyzer'
 import { usePlayerStore } from '@/store/playerStore'
 import { useUIStore } from '@/store/uiStore'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+import { useResponsive } from '@/hooks/useResponsive'
 import ModeSelector from './ModeSelector'
 
 function fmt(s: number) {
@@ -22,6 +23,7 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
     nextTrack, prevTrack,
   } = usePlayerStore()
   const setMusicPanelOpen = useUIStore((s) => s.setMusicPanelOpen)
+  const { isMobile } = useResponsive()
 
   const analyzerConnected = useRef(false)
 
@@ -125,11 +127,15 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 
+  const padding = isMobile ? '16px' : '50px'
+  const bottomPadding = isMobile ? '24px' : '50px'
+
   return (
     <div style={{
       position: 'fixed', inset: 0,
       display: 'flex', flexDirection: 'column',
-      padding: '50px', gap: '10px',
+      padding: `${padding} ${padding} ${bottomPadding} ${padding}`,
+      gap: '10px',
       pointerEvents: 'auto',
       fontFamily: 'Inter, -apple-system, sans-serif',
     }}>
