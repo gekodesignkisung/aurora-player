@@ -73,7 +73,7 @@ export default function MusicPanel({ open, onClose }: Props) {
       {/* Panel */}
       <div style={panelStyle}>
         {/* Header */}
-        <div style={{ padding: '16px 26px', borderBottom: '1px solid rgba(255,255,255,0.08)', position: 'sticky', top: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10, backdropFilter: 'blur(20px)' }}>
+        <div style={{ padding: '16px 26px', position: 'sticky', top: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10, backdropFilter: 'blur(20px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
             {/* Tabs */}
             <div style={{ display: 'flex', gap: 4 }}>
@@ -180,7 +180,7 @@ export default function MusicPanel({ open, onClose }: Props) {
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}
               >
-                플레이리스트 시작 {isLoadingJamendo ? '로딩 중…' : '▶'}
+                {isLoadingJamendo ? '로딩 중…' : '▶'}
               </button>
             </div>
           )}
@@ -216,7 +216,7 @@ export default function MusicPanel({ open, onClose }: Props) {
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}
               >
-                플레이리스트 시작 {isLoadingJamendo ? '로딩 중…' : '▶'}
+                {isLoadingJamendo ? '로딩 중…' : '▶'}
               </button>
             </div>
           )}
@@ -241,15 +241,12 @@ export default function MusicPanel({ open, onClose }: Props) {
                 key={t.id}
                 onClick={() => { setTrack(t); setIsPlaying(true) }}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '10px 16px', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 0,
+                  padding: '10px 16px 10px 36px', cursor: 'pointer',
                   background: currentTrack?.id === t.id ? 'rgba(255,255,255,0.08)' : 'transparent',
                   transition: 'background 0.15s',
                 }}
               >
-                <svg width="20" height="20" fill="rgba(255,255,255,0.5)" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{
                     color: currentTrack?.id === t.id ? 'white' : 'rgba(255,255,255,0.75)',
@@ -265,7 +262,7 @@ export default function MusicPanel({ open, onClose }: Props) {
           )}
         </div>
 
-        <div style={{ padding: '10px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
+        <div style={{ padding: '10px 16px', textAlign: 'center' }}>
           <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>
             {allTracks.length > 0 ? `${allTracks.length}개 트랙` : tab === 'local' ? '로컬 파일 재생' : 'Deezer 무료 스트리밍'  }
           </p>
