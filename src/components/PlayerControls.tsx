@@ -168,7 +168,7 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
           onClick={togglePlay}
           style={{
             width: 72, height: 72, borderRadius: '50%',
-            background: 'transparent', border: '2px solid #dddddd',
+            background: 'transparent', border: 'none',
             color: '#dddddd', display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', flexShrink: 0, transition: 'all 0.2s',
             padding: 0,
