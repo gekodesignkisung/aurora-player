@@ -117,7 +117,7 @@ export default function MusicPanel({ open, onClose }: Props) {
 
           {/* Tab content: local file drop zone */}
           {tab === 'local' && (
-            <div style={{ minHeight: 120 }}>
+            <div style={{ minHeight: 180 }}>
               <label
                 htmlFor="music-file-input"
                 onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
@@ -154,7 +154,7 @@ export default function MusicPanel({ open, onClose }: Props) {
 
           {/* Genre tab */}
           {tab === 'genre' && (
-            <div style={{ minHeight: 120 }}>
+            <div style={{ minHeight: 180 }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                 {GENRES.map((g) => (
                   <button
@@ -195,7 +195,7 @@ export default function MusicPanel({ open, onClose }: Props) {
 
           {/* Theme tab */}
           {tab === 'theme' && (
-            <div style={{ minHeight: 120 }}>
+            <div style={{ minHeight: 180 }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                 {THEMES.map((t) => (
                   <button
