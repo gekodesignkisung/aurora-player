@@ -78,8 +78,12 @@ export default function MusicPanel({ open, onClose }: Props) {
       source: 'local' as const,
     }))
     addLocalTracks(tracks)
+    if (tracks.length > 0) {
+      setTrack(tracks[0])
+      setIsPlaying(true)
+    }
     onClose()
-  }, [addLocalTracks, onClose])
+  }, [addLocalTracks, setTrack, setIsPlaying, onClose])
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) addFiles(e.target.files)
