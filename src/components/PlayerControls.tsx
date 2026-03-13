@@ -90,9 +90,14 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
     audio.volume = volume
     audio.load()
     ensureAnalyzer()
-    audio.play().catch(() => setIsPlaying(false))
+    if (isPlaying) {
+      audio.play().catch((err) => {
+        console.error('Playback failed:', err)
+        setIsPlaying(false)
+      })
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [track])
+  }, [track, isPlaying])
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume
