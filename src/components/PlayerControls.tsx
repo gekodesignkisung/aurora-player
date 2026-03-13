@@ -12,16 +12,25 @@ interface Props {
   analyzerRef: React.RefObject<AudioAnalyzer | null>
 }
 
-// Arc geometry — matches Figma: radius 100px, 270° arc, starts at 7:30 (135° in SVG coords)
-const R           = 100
-const CX          = 110   // SVG center (with 10px overflow padding)
-const CY          = 110
-const SVG_SIZE    = 220
+// Arc geometry constants
 const STROKE      = 2
-const CIRCUM      = 2 * Math.PI * R         // ≈ 628.3
 const START_DEG   = 135                     // 7:30 position in SVG (0° = 3 o'clock, CW)
 const TOTAL_DEG   = 270                     // 270° arc
-const ARC_LEN     = (TOTAL_DEG / 360) * CIRCUM  // ≈ 471.2
+
+// Size configuration helper
+const getGeometry = (isMobile: boolean) => {
+  if (isMobile) {
+    const R = 70
+    return { R, CX: 80, CY: 80, SVG_SIZE: 160, btnSize: 70 }
+  }
+  const R = 100
+  return { R, CX: 110, CY: 110, SVG_SIZE: 220, btnSize: 100 }
+}
+
+const getArcLength = (R: number) => {
+  const circum = 2 * Math.PI * R
+  return (TOTAL_DEG / 360) * circum
+}
 
 
 export default function PlayerControls({ audioRef, analyzerRef }: Props) {
@@ -36,6 +45,11 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
   const { isMobile } = useResponsive()
   const analyzerConnected = useRef(false)
   const pad = isMobile ? '20px' : '50px'
+
+  // Geometry for ring based on screen size
+  const geo = getGeometry(isMobile)
+  const ARC_LEN = getArcLength(geo.R)
+  const CIRCUM = 2 * Math.PI * geo.R
 
   const resetHideTimer = useCallback(() => {
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current)
@@ -156,10 +170,10 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
   const onArcClick = useCallback((e: React.MouseEvent<SVGCircleElement>) => {
     const svg  = e.currentTarget.closest('svg')!
     const rect = svg.getBoundingClientRect()
-    const sx   = SVG_SIZE / rect.width
-    const sy   = SVG_SIZE / rect.height
-    const x    = (e.clientX - rect.left) * sx - CX
-    const y    = (e.clientY - rect.top)  * sy - CY
+    const sx   = geo.SVG_SIZE / rect.width
+    const sy   = geo.SVG_SIZE / rect.height
+    const x    = (e.clientX - rect.left) * sx - geo.CX
+    const y    = (e.clientY - rect.top)  * sy - geo.CY
     let   ang  = Math.atan2(y, x) * (180 / Math.PI)
     if (ang < 0) ang += 360
     let norm = ang - START_DEG
@@ -167,7 +181,7 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
     const p = Math.max(0, Math.min(1, norm / TOTAL_DEG))
     const audio = audioRef.current
     if (audio && duration) audio.currentTime = p * duration
-  }, [audioRef, duration])
+  }, [audioRef, duration, geo])
 
   return (
     <>
@@ -238,28 +252,28 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
 
       {/* ── Ring — fixed at exact screen center ── */}
       <div style={{
-        position: 'fixed', top: 'calc(50% - 100px)', left: '50%',
+        position: 'fixed', top: `calc(50% - ${geo.SVG_SIZE / 2}px)`, left: '50%',
         transform: 'translate(-50%, -50%)',
         pointerEvents: 'auto',
       }}>
-        <div style={{ position: 'relative', width: SVG_SIZE, height: SVG_SIZE }}>
-          <svg width={SVG_SIZE} height={SVG_SIZE} viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`} style={{ display: 'block', overflow: 'visible' }}>
-            <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth={STROKE}
+        <div style={{ position: 'relative', width: geo.SVG_SIZE, height: geo.SVG_SIZE }}>
+          <svg width={geo.SVG_SIZE} height={geo.SVG_SIZE} viewBox={`0 0 ${geo.SVG_SIZE} ${geo.SVG_SIZE}`} style={{ display: 'block', overflow: 'visible' }}>
+            <circle cx={geo.CX} cy={geo.CY} r={geo.R} fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth={STROKE}
               strokeDasharray={`${ARC_LEN} ${CIRCUM - ARC_LEN}`} strokeLinecap="round"
-              transform={`rotate(${START_DEG} ${CX} ${CY})`} />
+              transform={`rotate(${START_DEG} ${geo.CX} ${geo.CY})`} />
             {filled > 0 && (
-              <circle cx={CX} cy={CY} r={R} fill="none" stroke="#ffffff" strokeWidth={STROKE}
+              <circle cx={geo.CX} cy={geo.CY} r={geo.R} fill="none" stroke="#ffffff" strokeWidth={STROKE}
                 strokeDasharray={`${filled} ${CIRCUM - filled}`} strokeLinecap="round"
-                transform={`rotate(${START_DEG} ${CX} ${CY})`}
+                transform={`rotate(${START_DEG} ${geo.CX} ${geo.CY})`}
                 style={{ transition: 'stroke-dasharray 0.25s linear' }} />
             )}
-            <circle cx={CX} cy={CY} r={R} fill="none" stroke="transparent" strokeWidth={28}
+            <circle cx={geo.CX} cy={geo.CY} r={geo.R} fill="none" stroke="transparent" strokeWidth={28}
               style={{ cursor: 'pointer' }} onClick={onArcClick} />
           </svg>
           <button onClick={togglePlay} style={{
             position: 'absolute', top: '50%', left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: 100, height: 100, borderRadius: '50%',
+            width: geo.btnSize, height: geo.btnSize, borderRadius: '50%',
             background: 'transparent', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', padding: 0, transition: 'transform 0.15s, opacity 0.15s',
@@ -270,8 +284,8 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
             onMouseUp={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.2)'; e.currentTarget.style.opacity = '0.6' }}
           >
             {isPlaying
-              ? <img src="/icon-pause.svg" alt="pause" style={{ width: 100, height: 100 }} />
-              : <img src="/icon-play.svg"  alt="play"  style={{ width: 100, height: 100 }} />
+              ? <img src="/icon-pause.svg" alt="pause" style={{ width: geo.btnSize, height: geo.btnSize }} />
+              : <img src="/icon-play.svg"  alt="play"  style={{ width: geo.btnSize, height: geo.btnSize }} />
             }
           </button>
         </div>
@@ -285,7 +299,7 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
         return (
           <div style={{
             position: 'fixed',
-            top: `calc(50% + ${SVG_SIZE / 2 - 110}px)`,
+            top: `calc(50% + ${geo.SVG_SIZE / 2 - geo.btnSize / 2}px)`,
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isMobile ? 20 : 32,
