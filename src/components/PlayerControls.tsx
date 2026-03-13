@@ -293,6 +293,31 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
       </div>
       )}
 
+      {/* ── Genre/Theme label — above ring on mobile ── */}
+      {showUI && (() => {
+        let displayLabel: string | null = null
+        if (playingStreamLabel) {
+          displayLabel = playingStreamLabel
+        } else if (currentPanelTab === 'genre' && selectedGenre) {
+          displayLabel = GENRES.find(g => g.id === selectedGenre)?.label ?? null
+        } else if (currentPanelTab === 'theme' && selectedTheme) {
+          displayLabel = THEMES.find(t => t.id === selectedTheme)?.label ?? null
+        }
+        return (track?.source === 'local' || displayLabel) && (
+          <div style={{
+            position: 'fixed',
+            top: isMobile ? `calc(50% - ${geo.SVG_SIZE / 2 + 30}px)` : `calc(50% + ${geo.SVG_SIZE / 2 - geo.btnSize / 2}px)`,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            pointerEvents: 'auto',
+          }}>
+            <p style={{ color: '#ffffff', fontSize: isMobile ? 13 : 16, fontFamily: 'Inter, -apple-system, sans-serif', margin: 0, textAlign: 'center', fontWeight: 500 }}>
+              {track?.source === 'local' ? 'Local' : displayLabel}
+            </p>
+          </div>
+        )
+      })()}
+
       {/* ── Volume slider + Prev/Next — fixed, centered below ring ── */}
       {showUI && (() => {
         const btnSize  = isMobile ? 70 : 80
@@ -309,21 +334,6 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
             minWidth: 'max-content',
             zIndex: 2,
           }}>
-            {(() => {
-              let displayLabel: string | null = null
-              if (playingStreamLabel) {
-                displayLabel = playingStreamLabel
-              } else if (currentPanelTab === 'genre' && selectedGenre) {
-                displayLabel = GENRES.find(g => g.id === selectedGenre)?.label ?? null
-              } else if (currentPanelTab === 'theme' && selectedTheme) {
-                displayLabel = THEMES.find(t => t.id === selectedTheme)?.label ?? null
-              }
-              return (track?.source === 'local' || displayLabel) && (
-                <p style={{ color: '#ffffff', fontSize: isMobile ? 13 : 16, fontFamily: 'Inter, -apple-system, sans-serif', margin: 0, textAlign: 'center', fontWeight: 500 }}>
-                  {track?.source === 'local' ? 'Local' : displayLabel}
-                </p>
-              )
-            })()}
             <div style={{ display: 'flex', alignItems: 'center', gap: btnGap }}>
               <button onClick={prevTrack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'transform 0.15s, opacity 0.15s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.2)'; e.currentTarget.style.opacity = '0.6' }}
