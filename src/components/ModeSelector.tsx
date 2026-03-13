@@ -28,16 +28,11 @@ export default function ModeSelector() {
 
     if (!selectedButton) return
 
-    const container = containerRef.current
-    const buttonLeft = selectedButton.offsetLeft
-    const buttonWidth = selectedButton.offsetWidth
-    const containerWidth = container.offsetWidth
-
-    // Center the button in the viewport
-    const scrollLeft = buttonLeft + buttonWidth / 2 - containerWidth / 2
-    container.scrollTo({
-      left: Math.max(0, scrollLeft),
+    // Use scrollIntoView to center the button in the container
+    selectedButton.scrollIntoView({
       behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center',
     })
   }, [visualMode, isMobile])
 
