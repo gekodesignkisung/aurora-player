@@ -223,14 +223,14 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
       {showUI && (
         <div style={{
           position: 'fixed', bottom: isMobile ? 22 : 60, left: 0, right: 0,
-          display: 'flex', justifyContent: 'center',
+          display: 'flex', justifyContent: isMobile ? 'flex-start' : 'center',
           pointerEvents: 'none',
-          padding: `0 ${isMobile ? '12px' : pad}`,
+          padding: `0 ${isMobile ? '16px' : pad}`,
           paddingBottom: 20,
           zIndex: 2,
-          overflow: 'visible',
+          overflow: isMobile ? 'hidden' : 'visible',
         }}>
-          <div style={{ pointerEvents: 'auto', overflow: 'visible' }}>
+          <div style={{ pointerEvents: 'auto', overflow: isMobile ? 'hidden' : 'visible', width: '100%' }}>
             <ModeSelector />
           </div>
         </div>

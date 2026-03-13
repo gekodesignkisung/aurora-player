@@ -62,12 +62,16 @@ export default function DropZone() {
         backdropFilter: 'blur(4px)',
       }}
     >
-      <div className="text-center">
-        <svg width="48" height="48" fill="rgba(255,255,255,0.7)" viewBox="0 0 24 24" style={{ margin: '0 auto 12px' }}>
-          <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
-        </svg>
-        <p className="text-white text-lg font-semibold">드롭해서 음악 추가</p>
-        <p className="text-white/50 text-sm mt-1">MP3, WAV, FLAC, AAC, OGG</p>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
+        <img src="/icon-folder.svg" alt="" style={{ width: 60, height: 60 }} />
+        <div>
+          <p style={{ color: '#CCCCCC', fontSize: 16, fontWeight: 600, fontFamily: 'Inter, -apple-system, sans-serif', margin: 0, lineHeight: '30px' }}>
+            Drag or click music files
+          </p>
+          <p style={{ color: '#999999', fontSize: 14, fontWeight: 400, fontFamily: 'Inter, -apple-system, sans-serif', margin: 0, lineHeight: '30px' }}>
+            MP3, WAV, FLAC, AAC, OGG
+          </p>
+        </div>
       </div>
     </div>
   )

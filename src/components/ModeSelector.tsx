@@ -17,26 +17,18 @@ export default function ModeSelector() {
   const { isMobile } = useResponsive()
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: isMobile ? 7 : 10, overflow: 'visible', alignItems: isMobile ? 'flex-end' : 'flex-start', justifyContent: 'center', paddingTop: 8 }}>
+    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 10, overflowX: isMobile ? 'auto' : 'visible', alignItems: 'flex-start', justifyContent: isMobile ? 'flex-start' : 'center', paddingTop: 8, WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none', width: isMobile ? 'calc(100% - 32px)' : 'auto', minWidth: 0 }}>
       {MODES.map((m) => (
         <button
           key={m.id}
           onClick={() => setVisualMode(m.id)}
           style={{
-            padding: isMobile ? '22px 10px' : '10px 22px',
-            paddingTop: isMobile ? '22px' : '12px',
-            borderRadius: isMobile ? 0 : 50,
+            padding: '10px 22px',
+            paddingTop: '12px',
+            borderRadius: 50,
             fontSize: 12,
             fontWeight: 400,
-            ...(isMobile
-              ? {
-                  border: 'none',
-                  borderTop: '2px solid' + (visualMode === m.id ? ' #fff' : ' transparent'),
-                  lineHeight: '1.2',
-                }
-              : {
-                  border: visualMode === m.id ? '2px solid #ddd' : '2px solid transparent',
-                }),
+            border: visualMode === m.id ? '2px solid #ddd' : '2px solid transparent',
             cursor: 'pointer',
             transition: 'all 0.2s',
             background: 'transparent',
@@ -44,9 +36,6 @@ export default function ModeSelector() {
             fontFamily: 'Inter, -apple-system, sans-serif',
             whiteSpace: 'nowrap',
             flexShrink: 0,
-            writingMode: isMobile ? 'vertical-rl' : 'horizontal-tb',
-            textOrientation: isMobile ? 'mixed' : 'mixed',
-            transform: isMobile ? 'rotate(180deg)' : 'none',
             boxSizing: 'border-box',
           }}
           onMouseEnter={(e) => {
