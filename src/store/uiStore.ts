@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { GenreId, ThemeId } from '@/api/deezer'
 
 type ActivePanel = 'queue' | 'genres' | null
+type MusicPanelTab = 'genre' | 'theme' | 'local'
 
 interface UIState {
   showUI: boolean
@@ -10,6 +11,7 @@ interface UIState {
   selectedTheme: ThemeId | null
   error: string | null
   musicPanelOpen: boolean
+  currentPanelTab: MusicPanelTab
 
   setShowUI: (v: boolean) => void
   setActivePanel: (p: ActivePanel) => void
@@ -17,6 +19,7 @@ interface UIState {
   setTheme: (t: ThemeId | null) => void
   setError: (msg: string | null) => void
   setMusicPanelOpen: (v: boolean) => void
+  setCurrentPanelTab: (tab: MusicPanelTab) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -26,6 +29,7 @@ export const useUIStore = create<UIState>((set) => ({
   selectedTheme: 'workout',
   error: null,
   musicPanelOpen: false,
+  currentPanelTab: 'genre',
 
   setShowUI: (v) => set({ showUI: v }),
   setActivePanel: (p) => set({ activePanel: p }),
@@ -33,4 +37,5 @@ export const useUIStore = create<UIState>((set) => ({
   setTheme: (t) => set({ selectedTheme: t }),
   setError: (msg) => set({ error: msg }),
   setMusicPanelOpen: (v) => set({ musicPanelOpen: v }),
+  setCurrentPanelTab: (tab) => set({ currentPanelTab: tab }),
 }))

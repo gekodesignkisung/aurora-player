@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function UIOverlay({ audioRef, analyzerRef }: Props) {
-  useIdleHide(6000)
+  useIdleHide(10000)
   const { isMobile } = useResponsive()
   const showUI = useUIStore((s) => s.showUI)
   const musicPanelOpen = useUIStore((s) => s.musicPanelOpen)

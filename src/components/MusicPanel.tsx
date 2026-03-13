@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { usePlayerStore } from '@/store/playerStore'
 import { useUIStore } from '@/store/uiStore'
 import { useResponsive } from '@/hooks/useResponsive'
@@ -39,11 +39,30 @@ export default function MusicPanel({ open, onClose }: Props) {
   const { isMobile } = useResponsive()
 
   const {
-    track: currentTrack, playlist, jamendoQueue,
+    track: currentTrack, playlist, jamendoQueue, isPlaying,
     setTrack, setIsPlaying,
     addLocalTracks, startGenreStream, startThemeStream, isLoadingJamendo,
+    loadGenreQueue, loadThemeQueue,
   } = usePlayerStore()
-  const { selectedGenre, setGenre, selectedTheme, setTheme: setSelectedTheme } = useUIStore()
+  const { selectedGenre, setGenre, selectedTheme, setTheme: setSelectedTheme, setCurrentPanelTab } = useUIStore()
+
+  // Update current tab in UIStore
+  useEffect(() => {
+    setCurrentPanelTab(tab)
+  }, [tab, setCurrentPanelTab])
+
+  // Load playlist when genre/theme is selected
+  useEffect(() => {
+    if (tab === 'genre' && selectedGenre) {
+      loadGenreQueue(selectedGenre)
+    }
+  }, [tab, selectedGenre, loadGenreQueue])
+
+  useEffect(() => {
+    if (tab === 'theme' && selectedTheme) {
+      loadThemeQueue(selectedTheme)
+    }
+  }, [tab, selectedTheme, loadThemeQueue])
 
   const allTracks: Track[] = tab === 'local' ? playlist : jamendoQueue
 
@@ -78,7 +97,7 @@ export default function MusicPanel({ open, onClose }: Props) {
     onMouseUp:    (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.opacity = '0.6' },
   }
 
-  const panelW: number | string = isMobile ? '100%' : 400
+  const panelW: number | string = isMobile ? '100%' : 380
   const canPlay = (tab === 'genre' && !!selectedGenre) || (tab === 'theme' && !!selectedTheme)
   const handlePlay = () => {
     if (tab === 'genre' && selectedGenre) { startGenreStream(selectedGenre); onClose() }
@@ -93,7 +112,7 @@ export default function MusicPanel({ open, onClose }: Props) {
           onClick={onClose}
           style={{
             position: 'fixed', top: 0, bottom: 0,
-            left: isMobile ? 0 : 400, right: 0,
+            left: isMobile ? 0 : 380, right: 0,
             zIndex: 39, pointerEvents: 'auto',
           }}
         />
@@ -102,24 +121,44 @@ export default function MusicPanel({ open, onClose }: Props) {
       {/* Panel — slides from left */}
       <div style={{
         position: 'fixed', left: 0, top: 0, bottom: 0, width: panelW,
-        background: S.colorBg,
+        background: 'rgba(0, 0, 0, 0.7)',
+        backdropFilter: 'blur(10px)',
         zIndex: 40, display: 'flex', flexDirection: 'column',
         transform: open ? 'translateX(0)' : 'translateX(-100%)',
         transition: 'transform 0.3s ease',
         pointerEvents: 'auto',
         fontFamily: S.font,
         overflow: 'hidden',
-      }}>
+      } as React.CSSProperties}>
 
         {/* ── 고정 상단 영역 ── */}
-        <div style={{ flexShrink: 0, padding: S.pad, paddingBottom: 0, display: 'flex', flexDirection: 'column', gap: S.gap }}>
+        <div style={{ flexShrink: 0, padding: S.pad, paddingBottom: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* Logo + Close button */}
-          <div style={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <img src="/logo-aurora.svg" alt="aurora" style={{ height: 50 }} />
+          {/* Top row: Navigation + Close button */}
+          <div style={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: -10 }}>
+            {/* Navigation: Genre / Theme / Local */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+            {(['genre', 'theme', 'local'] as const).map((id) => (
+              <button
+                key={id}
+                onClick={() => setTab(id)}
+                style={{
+                  background: 'none', border: 'none', padding: 0, paddingBottom: 8,
+                  borderBottom: tab === id ? '2px solid #CCCCCC' : '2px solid transparent',
+                  cursor: 'pointer',
+                  color: '#ffffff', fontSize: 16, fontWeight: 700, fontFamily: S.font,
+                  transition: 'all 0.2s',
+                }}
+              >
+                {id === 'genre' ? 'Genre' : id === 'theme' ? 'Theme' : 'Local'}
+              </button>
+            ))}
+            </div>
+
+            {/* Close button */}
             <button
               onClick={onClose}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'opacity 0.15s', marginBottom: 10 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'opacity 0.15s' }}
               {...hov}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#999999" strokeWidth="2" strokeLinecap="round">
@@ -127,28 +166,6 @@ export default function MusicPanel({ open, onClose }: Props) {
                 <line x1="17" y1="7" x2="7" y2="17"/>
               </svg>
             </button>
-          </div>
-
-          {/* Navigation: Genre / Theme / Local */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            {(['genre', 'theme', 'local'] as const).map((id) => (
-              <button
-                key={id}
-                onClick={() => setTab(id)}
-                style={{
-                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                  color: S.colorText, fontSize: 16, fontWeight: 700, fontFamily: S.font,
-                  opacity: tab === id ? 1 : 0.4,
-                  transition: 'opacity 0.15s',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = tab === id ? '0.6' : '0.7' }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = tab === id ? '1' : '0.4' }}
-                onMouseDown={(e) => { e.currentTarget.style.opacity = '1' }}
-                onMouseUp={(e) => { e.currentTarget.style.opacity = tab === id ? '0.6' : '0.7' }}
-              >
-                {id === 'genre' ? 'Genre' : id === 'theme' ? 'Theme' : 'Local'}
-              </button>
-            ))}
           </div>
 
           {/* Genre tags */}
@@ -164,11 +181,17 @@ export default function MusicPanel({ open, onClose }: Props) {
                       padding: `${S.tagPadV}px ${S.tagPadH}px`,
                       borderRadius: S.tagRadius,
                       fontSize: S.tagFontSize, fontWeight: S.tagFontWeight, fontFamily: S.font,
-                      border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                      background: active ? S.colorText : 'rgba(204,204,204,0.20)',
-                      color: active ? '#000000' : S.colorText,
+                      border: active ? '2px solid #ddd' : '2px solid transparent',
+                      cursor: 'pointer', transition: 'all 0.2s',
+                      background: 'transparent',
+                      color: S.colorText,
                     }}
-                    {...hov}
+                    onMouseEnter={(e) => {
+                      if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.4)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                    }}
                   >
                     {g.label}
                   </button>
@@ -190,11 +213,17 @@ export default function MusicPanel({ open, onClose }: Props) {
                       padding: `${S.tagPadV}px ${S.tagPadH}px`,
                       borderRadius: S.tagRadius,
                       fontSize: S.tagFontSize, fontWeight: S.tagFontWeight, fontFamily: S.font,
-                      border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                      background: active ? S.colorText : 'rgba(204,204,204,0.20)',
-                      color: active ? '#000000' : S.colorText,
+                      border: active ? '2px solid #ddd' : '2px solid transparent',
+                      cursor: 'pointer', transition: 'all 0.2s',
+                      background: 'transparent',
+                      color: S.colorText,
                     }}
-                    {...hov}
+                    onMouseEnter={(e) => {
+                      if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.4)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                    }}
                   >
                     {t.label}
                   </button>
@@ -221,11 +250,11 @@ export default function MusicPanel({ open, onClose }: Props) {
                 }}
               >
                 <img src="/icon-folder.svg" alt="" style={{ width: 60, height: 60 }} />
-                <div style={{ opacity: 0.6, textAlign: 'center' }}>
-                  <p style={{ color: '#CCCCCC', fontSize: 14, fontWeight: 600, fontFamily: S.font, margin: 0, lineHeight: '22.4px' }}>
-                    음악 파일들을 드래그하거나 클릭
+                <div style={{ opacity: 1, textAlign: 'center' }}>
+                  <p style={{ color: '#CCCCCC', fontSize: 16, fontWeight: 600, fontFamily: S.font, margin: 0, lineHeight: '30px' }}>
+                    Drag or click music files
                   </p>
-                  <p style={{ color: '#555555', fontSize: 14, fontWeight: 600, fontFamily: S.font, margin: 0, lineHeight: '22.4px' }}>
+                  <p style={{ color: '#999999', fontSize: 14, fontWeight: 400, fontFamily: S.font, margin: 0, lineHeight: '30px' }}>
                     MP3, WAV, FLAC, AAC, OGG
                   </p>
                 </div>
@@ -250,13 +279,13 @@ export default function MusicPanel({ open, onClose }: Props) {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 paddingTop: 21, paddingBottom: 21, paddingLeft: 22, paddingRight: 22, gap: 10,
                 cursor: canPlay && !isLoadingJamendo ? 'pointer' : 'default',
-                opacity: canPlay && !isLoadingJamendo ? 1 : 0.3,
+                opacity: !canPlay || isLoadingJamendo ? 0.3 : (isPlaying ? 0.5 : 1),
                 transition: 'transform 0.15s, opacity 0.15s',
               }}
-              onMouseEnter={(e) => { if (canPlay && !isLoadingJamendo) e.currentTarget.style.opacity = '0.6' }}
-            onMouseLeave={(e) => { if (canPlay && !isLoadingJamendo) e.currentTarget.style.opacity = '1' }}
+              onMouseEnter={(e) => { if (canPlay && !isLoadingJamendo) e.currentTarget.style.opacity = isPlaying ? '0.8' : '0.6' }}
+            onMouseLeave={(e) => { if (canPlay && !isLoadingJamendo) e.currentTarget.style.opacity = isPlaying ? '0.5' : '1' }}
             onMouseDown={(e) => { if (canPlay && !isLoadingJamendo) e.currentTarget.style.opacity = '1' }}
-            onMouseUp={(e) => { if (canPlay && !isLoadingJamendo) e.currentTarget.style.opacity = '0.6' }}
+            onMouseUp={(e) => { if (canPlay && !isLoadingJamendo) e.currentTarget.style.opacity = isPlaying ? '0.8' : '0.6' }}
             >
               {isLoadingJamendo
                 ? <span style={{ color: S.colorText, fontSize: 13, fontFamily: S.font }}>Loading…</span>
@@ -278,21 +307,21 @@ export default function MusicPanel({ open, onClose }: Props) {
                   <div
                     key={t.id}
                     onClick={() => { setTrack(t); setIsPlaying(true); onClose() }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'background 0.15s', borderRadius: 8, padding: '6px 8px', margin: '-6px -8px', background: isCurrent ? 'rgba(153,153,153,0.2)' : 'transparent' }}
-                    onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = 'rgba(153,153,153,0.1)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = isCurrent ? 'rgba(153,153,153,0.2)' : 'transparent' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'background 0.15s', padding: '11px 30px', margin: '-11px -30px', background: isCurrent ? 'rgba(153,153,153,0.3)' : 'transparent' }}
+                    onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = 'rgba(153,153,153,0.3)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = isCurrent ? 'rgba(153,153,153,0.3)' : 'transparent' }}
                   >
                     <div style={{ minWidth: 0 }}>
                       <p style={{
                         color: isCurrent ? '#ffffff' : S.colorText,
-                        fontSize: S.trackTitleSize, fontWeight: S.trackTitleWeight, fontFamily: S.font,
+                        fontSize: 14, fontWeight: S.trackTitleWeight, fontFamily: S.font,
                         margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       }}>
                         {t.name}
                       </p>
                       <p style={{
-                        color: S.colorSub,
-                        fontSize: S.trackArtistSize, fontWeight: S.trackArtistWeight, fontFamily: S.font,
+                        color: '#888888',
+                        fontSize: 13, fontWeight: 400, fontFamily: S.font,
                         margin: '4px 0 0',
                       }}>
                         {t.artist}
@@ -307,7 +336,7 @@ export default function MusicPanel({ open, onClose }: Props) {
           {/* Empty state */}
           {allTracks.length === 0 && tab !== 'local' && (
             <p style={{ color: 'rgba(255,255,255,0.18)', fontSize: 13, fontFamily: S.font, margin: 0 }}>
-              {tab === 'genre' ? 'Genre를 선택 후 재생하세요' : 'Theme를 선택 후 재생하세요'}
+              {tab === 'genre' ? 'Select genre and play' : 'Select theme and play'}
             </p>
           )}
 

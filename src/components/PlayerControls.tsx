@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AudioAnalyzer } from '@/audio/AudioAnalyzer'
 import { usePlayerStore } from '@/store/playerStore'
 import { useUIStore } from '@/store/uiStore'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useResponsive } from '@/hooks/useResponsive'
+import { GENRES, THEMES } from '@/api/deezer'
 import ModeSelector from './ModeSelector'
 
 interface Props {
@@ -24,15 +25,30 @@ const ARC_LEN     = (TOTAL_DEG / 360) * CIRCUM  // ≈ 471.2
 
 
 export default function PlayerControls({ audioRef, analyzerRef }: Props) {
+  const [showUI, setShowUI] = useState(true)
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const {
     track, isPlaying, currentTime, duration, volume,
     setIsPlaying, setCurrentTime, setDuration, setVolume,
     nextTrack, prevTrack, playingStreamLabel,
   } = usePlayerStore()
-  const { setMusicPanelOpen } = useUIStore()
+  const { setMusicPanelOpen, selectedGenre, selectedTheme, currentPanelTab } = useUIStore()
   const { isMobile } = useResponsive()
   const analyzerConnected = useRef(false)
   const pad = isMobile ? '20px' : '50px'
+
+  const resetHideTimer = useCallback(() => {
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current)
+    setShowUI(true)
+    hideTimeoutRef.current = setTimeout(() => setShowUI(false), 30000)
+  }, [])
+
+  useEffect(() => {
+    resetHideTimer()
+    return () => {
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current)
+    }
+  }, [])
 
   const ensureAnalyzer = useCallback(() => {
     const audio = audioRef.current
@@ -150,52 +166,71 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
 
   return (
     <>
-      {/* ── Top right: Track info  +  Bottom: Mode buttons ── */}
+      {/* Full screen activity tracker */}
       <div style={{
         position: 'fixed', inset: 0,
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'flex-end',
-        padding: pad,
-        pointerEvents: 'none',
-        fontFamily: 'Inter, -apple-system, sans-serif',
-      }}>
-        {track && (
-          // Figma 1-20: 60×235 — thumbnail top, vertical text below
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, flexShrink: 0, pointerEvents: 'auto' }}>
-            {/* Thumbnail — 60×60 */}
-            {track.coverUrl ? (
-              <img src={track.coverUrl} alt="" style={{ width: 60, height: 60, borderRadius: 4, objectFit: 'cover' }} />
-            ) : (
-              <div style={{ width: 60, height: 60, background: 'white', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="24" height="24" fill="rgba(0,0,0,0.2)" viewBox="0 0 24 24">
-                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-                </svg>
+        pointerEvents: 'auto',
+        zIndex: 0,
+      }}
+        onMouseMove={resetHideTimer}
+        onClick={resetHideTimer}
+      />
+
+      {/* ── Top right: Track info  +  Bottom: Mode buttons ── */}
+      {showUI && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'flex-end',
+          padding: pad,
+          pointerEvents: 'none',
+          fontFamily: 'Inter, -apple-system, sans-serif',
+          zIndex: 2,
+          overflow: 'visible',
+        }}>
+          {track && (
+            // Figma 1-20: 60×235 — thumbnail top, vertical text below
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, flexShrink: 0, pointerEvents: 'auto' }}>
+              {/* Thumbnail — 60×60 */}
+              {track.coverUrl ? (
+                <img src={track.coverUrl} alt="" style={{ width: 60, height: 60, borderRadius: 0, objectFit: 'cover' }} />
+              ) : (
+                <div style={{ width: 60, height: 60, background: 'white', borderRadius: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="24" height="24" fill="rgba(0,0,0,0.2)" viewBox="0 0 24 24">
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                  </svg>
+                </div>
+              )}
+              {/* Vertical text — title + artist side by side, flowing downward */}
+              <div style={{ display: 'flex', gap: 2, maxHeight: isMobile ? 200 : 300, overflow: 'hidden' }}>
+                <p style={{ writingMode: 'vertical-rl', color: '#BBBBBB', fontWeight: 400, fontSize: isMobile ? 13 : 18, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.artist}</p>
+                <p style={{ writingMode: 'vertical-rl', color: '#ffffff', fontWeight: 400, fontSize: isMobile ? 14 : 20, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.name}</p>
               </div>
-            )}
-            {/* Vertical text — title + artist side by side, flowing downward */}
-            <div style={{ display: 'flex', gap: 2, maxHeight: isMobile ? 200 : 300, overflow: 'hidden' }}>
-              <p style={{ writingMode: 'vertical-rl', color: '#BBBBBB', fontWeight: 400, fontSize: isMobile ? 13 : 18, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.artist}</p>
-              <p style={{ writingMode: 'vertical-rl', color: '#ffffff', fontWeight: 400, fontSize: isMobile ? 14 : 20, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.name}</p>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* ── Bottom center: Mode buttons ── */}
-      <div style={{
-        position: 'fixed', bottom: isMobile ? 12 : pad, left: 0, right: 0,
-        display: 'flex', justifyContent: 'center',
-        pointerEvents: 'none',
-        padding: `0 ${isMobile ? '12px' : pad}`,
-      }}>
-        <div style={{ pointerEvents: 'auto' }}>
-          <ModeSelector />
+      {showUI && (
+        <div style={{
+          position: 'fixed', bottom: isMobile ? 22 : 60, left: 0, right: 0,
+          display: 'flex', justifyContent: 'center',
+          pointerEvents: 'none',
+          padding: `0 ${isMobile ? '12px' : pad}`,
+          paddingBottom: 20,
+          zIndex: 2,
+          overflow: 'visible',
+        }}>
+          <div style={{ pointerEvents: 'auto', overflow: 'visible' }}>
+            <ModeSelector />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Ring — fixed at exact screen center ── */}
       <div style={{
-        position: 'fixed', top: '50%', left: '50%',
+        position: 'fixed', top: 'calc(50% - 100px)', left: '50%',
         transform: 'translate(-50%, -50%)',
         pointerEvents: 'auto',
       }}>
@@ -235,19 +270,36 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
       </div>
 
       {/* ── Volume slider + Prev/Next — fixed, centered below ring ── */}
-      {(() => {
-        const btnSize  = 80
-        const btnGap   = isMobile ? 30 : 50
-        const volH     = 150
+      {showUI && (() => {
+        const btnSize  = isMobile ? 70 : 80
+        const btnGap   = isMobile ? 70 : 100
+        const volH     = 120
         return (
           <div style={{
             position: 'fixed',
-            top: `calc(50% + ${SVG_SIZE / 2 - 10}px)`,
+            top: `calc(50% + ${SVG_SIZE / 2 - 110}px)`,
             left: '50%',
             transform: 'translateX(-50%)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isMobile ? 8 : 16,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isMobile ? 20 : 32,
             pointerEvents: 'auto',
+            minWidth: 'max-content',
+            zIndex: 2,
           }}>
+            {(() => {
+              let displayLabel: string | null = null
+              if (playingStreamLabel) {
+                displayLabel = playingStreamLabel
+              } else if (currentPanelTab === 'genre' && selectedGenre) {
+                displayLabel = GENRES.find(g => g.id === selectedGenre)?.label ?? null
+              } else if (currentPanelTab === 'theme' && selectedTheme) {
+                displayLabel = THEMES.find(t => t.id === selectedTheme)?.label ?? null
+              }
+              return (track?.source === 'local' || displayLabel) && (
+                <p style={{ color: '#ffffff', fontSize: isMobile ? 13 : 16, fontFamily: 'Inter, -apple-system, sans-serif', margin: 0, textAlign: 'center', fontWeight: 500 }}>
+                  {track?.source === 'local' ? 'Local' : displayLabel}
+                </p>
+              )
+            })()}
             <div style={{ display: 'flex', alignItems: 'center', gap: btnGap }}>
               <button onClick={prevTrack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'transform 0.15s, opacity 0.15s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.2)'; e.currentTarget.style.opacity = '0.6' }}
@@ -280,12 +332,6 @@ export default function PlayerControls({ audioRef, analyzerRef }: Props) {
                 <img src="/icon-next.svg" alt="next" style={{ width: btnSize, height: btnSize }} />
               </button>
             </div>
-            {/* Genre / Theme / Local label */}
-            {(track?.source === 'local' || playingStreamLabel) && (
-              <p style={{ color: '#cccccc', fontSize: isMobile ? 13 : 16, fontFamily: 'Inter, -apple-system, sans-serif', margin: 0, textAlign: 'center' }}>
-                {track?.source === 'local' ? 'Local' : playingStreamLabel}
-              </p>
-            )}
           </div>
         )
       })()}

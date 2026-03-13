@@ -38,6 +38,8 @@ interface PlayerState {
   addLocalTracks: (tracks: Track[]) => void
   nextTrack: () => void
   prevTrack: () => void
+  loadGenreQueue: (genre: GenreId) => Promise<void>
+  loadThemeQueue: (themeId: ThemeId) => Promise<void>
   startGenreStream: (genre: GenreId) => Promise<void>
   startThemeStream: (themeId: ThemeId) => Promise<void>
 }
@@ -92,6 +94,30 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const idx = combined.findIndex((t) => t.id === track.id)
     const prev = combined[(idx - 1 + combined.length) % combined.length]
     set({ track: prev })
+  },
+
+  loadGenreQueue: async (genre) => {
+    set({ isLoadingJamendo: true })
+    try {
+      const tracks = await fetchGenreQueue(genre, 30)
+      if (tracks.length === 0) return
+      const shuffled = [...tracks].sort(() => Math.random() - 0.5)
+      set({ jamendoQueue: shuffled })
+    } finally {
+      set({ isLoadingJamendo: false })
+    }
+  },
+
+  loadThemeQueue: async (themeId) => {
+    set({ isLoadingJamendo: true })
+    try {
+      const tracks = await fetchThemeQueue(themeId, 30)
+      if (tracks.length === 0) return
+      const shuffled = [...tracks].sort(() => Math.random() - 0.5)
+      set({ jamendoQueue: shuffled })
+    } finally {
+      set({ isLoadingJamendo: false })
+    }
   },
 
   startGenreStream: async (genre) => {
