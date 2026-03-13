@@ -1,7 +1,7 @@
 import type { Track } from '@/types/track'
 
 const CLIENT_ID = import.meta.env.VITE_JAMENDO_CLIENT_ID ?? 'b6747d04'
-const BASE = '/jamendo/v3.0'
+const BASE = 'https://api.jamendo.com/v3.0'
 
 export const GENRES = [
   { id: 'electronic', label: 'Electronic', tag: 'electronic' },
