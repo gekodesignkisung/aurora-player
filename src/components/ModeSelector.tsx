@@ -1,6 +1,6 @@
 import { usePlayerStore } from '@/store/playerStore'
 import { useResponsive } from '@/hooks/useResponsive'
-import { useRef, useEffect } from 'react'
+import { useRef, useLayoutEffect } from 'react'
 import type { VisualMode } from '@/types/visual'
 
 const MODES: { id: VisualMode; label: string; key: string }[] = [
@@ -19,7 +19,7 @@ export default function ModeSelector() {
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to selected button on mobile
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isMobile || !containerRef.current) return
 
     const selectedButton = containerRef.current.querySelector(
