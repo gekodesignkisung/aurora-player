@@ -44,10 +44,12 @@ export default function UIOverlay({ audioRef, analyzerRef }: Props) {
       <MusicPanel open={musicPanelOpen} onClose={() => setMusicPanelOpen(false)} />
       <div style={{
         position: 'fixed', bottom: 16, right: 20, zIndex: 10,
-        color: '#fff', opacity: 0.2, fontSize: 12,
+        display: 'flex', alignItems: 'center', gap: 8,
+        color: '#fff', fontSize: 12,
         fontFamily: 'inherit', pointerEvents: 'none', userSelect: 'none',
       }}>
-        ©2026 Prototype created by Gekodesign
+        <span style={{ opacity: 0.3, position: 'relative', top: 2 }}>©2026 Prototype by Kisung</span>
+        <img src="/logo-corca.svg" alt="" style={{ height: 20, opacity: 0.3, marginLeft: 10 }} />
       </div>
     </>
   )
